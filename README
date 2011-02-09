@@ -1,0 +1,49 @@
+
+This software is is release under GPL
+
+For more information http://www.gnu.org/licenses/gpl.html
+
+Author: Cesar Avalos, avaloscesar at g mail dot c o m
+
+
+
+# Require awk installed
+
+# must have acl enabled on mount 
+
+# Acceptable modes :
+
+# rwx
+# rw-
+# r--
+# --x
+# I think you got it right 
+
+
+
+# Example of usage
+
+
+node default  {
+
+    acl_user { "avalos_rw_rc.local" :
+        id => avalos,
+        mode => "rw-",
+        path => "/etc/rc.local",
+    }
+
+    acl_group { "puppet_rw_rc.local" :
+        id => puppet,
+        mode => "rw-",
+        path => "/etc/rc.local",
+    }
+
+
+    # only for dir
+    acl_default { "foobar" :
+        id => puppet,
+        mode => "rw-",
+        path => "/etc/puppet",
+    }
+}
+
