@@ -40,7 +40,14 @@ node default  {
 
 
     # only for dir
-    acl_default { "foobar" :
+
+    acl_udefault { "foobar" :
+        id => puppet,
+        mode => "rw-",
+        path => "/etc/puppet",
+    }
+
+    acl_gdefault { "foobar" :
         id => puppet,
         mode => "rw-",
         path => "/etc/puppet",
