@@ -3,7 +3,7 @@
 
 define acl_udefault( $id, $mode, $path) {
         exec { "apply_udefault":
-                command   => "/usr/bin/setfacl -m g:$id:$mode $path",
+                command   => "/usr/bin/setfacl -m d:u:$id:$mode $path",
                 onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /user/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
         }
 }
@@ -11,7 +11,7 @@ define acl_udefault( $id, $mode, $path) {
 
 define acl_gdefault( $id, $mode, $path) {
         exec { "apply_gdefault":
-                command   => "/usr/bin/setfacl -m g:$id:$mode $path",
+                command   => "/usr/bin/setfacl -m d:g:$id:$mode $path",
                 onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /group/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
         }
 }
