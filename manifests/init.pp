@@ -3,7 +3,7 @@
 class acl {
 
     define udefault( $id, $mode, $path) {
-            exec { "apply_udefault":
+            exec { $id :
                     command   => "/usr/bin/setfacl -m d:u:$id:$mode $path",
                     onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /user/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
             }
@@ -11,7 +11,7 @@ class acl {
 
 
     define gdefault( $id, $mode, $path) {
-            exec { "apply_gdefault":
+            exec { $id :
                     command   => "/usr/bin/setfacl -m d:g:$id:$mode $path",
                     onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /group/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
             }
@@ -19,7 +19,7 @@ class acl {
 
 
     define group( $id, $mode, $path) {
-            exec { "apply_group":
+            exec { $id :
                     command   => "/usr/bin/setfacl -m g:$id:$mode $path",
                     onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^group/ && \$2 ~/$id/  && \$3 ~ /$mode/  { exit 1 } '  "
             }
@@ -27,7 +27,7 @@ class acl {
      
 
     define user( $id, $mode, $path) {
-            exec { "apply_user":
+            exec { $id :
                     command   => "/usr/bin/setfacl -m u:$id:$mode $path",
                     onlyif => "/usr/bin/getfacl $path 2>&1 | awk -F: ' \$1 ~ /^user/ && \$2 ~/$id/  && \$3 ~ /$mode/  { exit 1 } '  "
             }
