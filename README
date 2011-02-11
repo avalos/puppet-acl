@@ -26,13 +26,15 @@ Author: Cesar Avalos, avaloscesar at g mail dot c o m
 
 node default  {
 
-    acl_user { "avalos_rw_rc.local" :
+    include acl
+
+    acl::user { "avalos_rw_rc.local" :
         id => avalos,
         mode => "rw-",
         path => "/etc/rc.local",
     }
 
-    acl_group { "puppet_rw_rc.local" :
+    acl::group { "puppet_rw_rc.local" :
         id => puppet,
         mode => "rw-",
         path => "/etc/rc.local",
@@ -41,13 +43,13 @@ node default  {
 
     # only for dir
 
-    acl_udefault { "foobar" :
+    acl::udefault { "foobar" :
         id => puppet,
         mode => "rw-",
         path => "/etc/puppet",
     }
 
-    acl_gdefault { "foobar" :
+    acl::gdefault { "foobar" :
         id => puppet,
         mode => "rw-",
         path => "/etc/puppet",
