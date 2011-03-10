@@ -1,0 +1,143 @@
+#!/bin/bash
+
+die () { 
+    exit 1
+}
+
+help_show () {
+    echo " 
+    Syntax: chuckacl [options] path path...
+
+    Options:
+    
+    -c      check only
+    -g      group
+    -u      user
+    -p      permissions [rwx)
+
+"
+}
+
+id_check () {
+    # $1 =group our user , $2 = name
+    if ( getent $1 $2 2>&1 > /dev/null ) ; then
+        echo do nothing >/dev/null
+    else echo $(echo Ops.. I think a $1  entry for \"$2\" doesn\'t exist... strange O.õ ) && die
+    fi
+}
+
+path_check () {
+    if [ -e  "$1" ] ; then echo do nothing >/dev/null ; else
+        echo "Ops.. Are you sure path \"$1\" exist?? I don't think so..."  && die
+    fi
+}
+
+perm_check_finish () { 
+    echo $1 && die
+}
+
+perm_check_syntax () {
+    pcs=$1
+    for (( i=`echo -n $pcs | wc -c` ;  i < 3 ; i++ )) ; do pcs="$pcs-" ;  done
+    if ( echo $pcs | awk '$1 !~ /^[r,w,x,-][r,w,x,-][r,w,x,-]$/ { exit 1 }') ;
+        then echo do nothing >/dev/null
+    else echo "Are you sure this permission \"$pcs\" is right ? go away!" && die
+    fi
+}
+
+perm_check_warn () { 
+    echo "Permission not set in: $1"
+}
+
+perm_check () {
+#   flag ; id ; perm ; path
+    case $1 in 
+        u) type=user ;;
+        g) type=group ;;
+    esac
+
+    if ( ! getfacl $4  2>&1 | awk -F\: -v type=$type -v id=$2 -v perm=$3 ' $1 ~ type && id == $2  && perm == $3   { exit 1  }  ' ) ; then
+        return 0
+    else return 1
+    fi
+    # Will return 0 if the acl is already there
+}
+
+perm_reorder () {
+    r=- ; w=- ; x=-
+    echo $1 | awk '$1 !~ /r/ { exit 1} ' && r=r
+    echo $1 | awk '$1 !~ /w/ { exit 1} ' && w=w
+    echo $1 | awk '$1 !~ /x/ { exit 1} ' && x=x
+    echo "$r$w$x"
+}
+
+perm_set_dir () {
+    # puting exec mod otherwise we couldnt list the directory
+    out=$(echo $1 | awk ' $1 !~ /x/ { sub("-$","x"); print  } ')
+    [ -z "$out" ] && out=$1
+    echo $out
+}
+
+perm_do () {
+
+    # Argumments order
+    # type flag , id , perm , path
+      f=$1 ; i=$2 ; m=$3 ; p=$4
+
+    # fix dir permissions
+    [ -d $p ] && m=$(perm_set_dir $m)
+
+    # if check fail, then
+    if ( ! perm_check $f $i $m $p )  ; then 
+
+        # if is to check only, exit 1, else go on..
+        [ $check -eq 1 ] && perm_check_finish "Found wrong perm at $p" 
+
+        # if is just a file go ahead and set
+        if [ -f $p ]  ; then 
+             setfacl -m $f:$i:$m $p
+        fi
+
+        # if is a dir, need more care
+        if [ -d $p ] ; then 
+            setfacl -m $f:$i:$m $p
+
+            # removing exec mode in default
+            setfacl -m d:$f:$i:` echo $m | sed s/x/-/ ` $p
+        fi
+    fi
+}
+
+
+main () {
+    flag=$1 ; idname=$2 ; perm=$3 ; allpaths=$4
+    for finalpath in $allpaths ; do 
+        find $finalpath | while read single_path ; do
+            perm_do $flag $idname $perm $single_path
+        done
+    done
+}
+
+# Global vars
+check=0
+
+# parsing all arguments 
+while (( "$#" )); do
+    case $1 in
+        -c) check=1 ;;
+        -u) shift ; id_check passwd $1
+            user=$1 ; flag=u ;;
+        -g) shift ; id_check group $1
+            group=$1 ; flag=g ;;
+        -p) shift ; perm_check_syntax $1
+            perm=$(perm_reorder $1) ;;
+         *) path_check $1
+            paths="$paths $1" ;;
+    esac
+    shift
+done
+
+([ ! -z $group ] && [ !  -z $user ]) && help_show && echo -e "You can not group and user at same time.\n" && die
+([ -z $group ] && [  -z $user ]) && help_show && echo -e "You need to especify a group or user.\n" && die
+[ -z $paths ] && help_show && echo -e "You need to especify at least one path.\n" && die
+(( [ ! -z $group ] && main $flag $group $perm "$paths" ) || ( [ ! -z $user ] && main $flag $user $perm "$paths" )) && exit 0

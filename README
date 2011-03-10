@@ -28,10 +28,10 @@ node default  {
 
     include acl
 
-    acl::user { "avalos_rw_rc.local" :
-        id => avalos,
+    acl::user { "www_data_var" :
+        id => www-data,
         mode => "rw-",
-        path => "/etc/rc.local",
+        path => "/var/www",
     }
 
     acl::group { "puppet_rw_rc.local" :
@@ -41,18 +41,5 @@ node default  {
     }
 
 
-    # only for dir
-
-    acl::udefault { "foobar" :
-        id => puppet,
-        mode => "rw-",
-        path => "/etc/puppet",
-    }
-
-    acl::gdefault { "foobar" :
-        id => puppet,
-        mode => "rw-",
-        path => "/etc/puppet",
-    }
 }
 

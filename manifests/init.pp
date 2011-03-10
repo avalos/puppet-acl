@@ -2,34 +2,32 @@
 
 class acl {
 
-    define udefault( $id, $mode, $path) {
-            exec { $id :
-                    command   => "/usr/bin/setfacl -m d:u:$id:$mode $path",
-                    onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /user/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
-            }
+    file { checkacl:
+        path => "/usr/local/bin/checkacl",
+        ensure => absent,
     }
 
-
-    define gdefault( $id, $mode, $path) {
-            exec { $id :
-                    command   => "/usr/bin/setfacl -m d:g:$id:$mode $path",
-                    onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^default/ && \$2 ~ /group/ && \$3 ~/$id/  && \$4 ~ /$mode/  { exit 1 } '  "
-            }
+    file { chuckacl:
+        path => "/usr/local/bin/chuckacl",
+        content => template("acl/chuckacl"),
+        owner => root, group => root, mode => 750,
     }
 
 
     define group( $id, $mode, $path) {
-            exec { $id :
-                    command   => "/usr/bin/setfacl -m g:$id:$mode $path",
-                    onlyif => "/usr/bin/getfacl $path  2>&1 | awk -F: ' \$1 ~ /^group/ && \$2 ~/$id/  && \$3 ~ /$mode/  { exit 1 } '  "
+            exec { "$id$mode$path" :
+                    command   => "/usr/local/bin/chuckacl -g $id -p $mode $path",
+                    unless => "/usr/local/bin/chuckacl -c -g $id -p $mode $path",
+                    logoutput => true,
             }
     }
      
 
     define user( $id, $mode, $path) {
-            exec { $id :
-                    command   => "/usr/bin/setfacl -m u:$id:$mode $path",
-                    onlyif => "/usr/bin/getfacl $path 2>&1 | awk -F: ' \$1 ~ /^user/ && \$2 ~/$id/  && \$3 ~ /$mode/  { exit 1 } '  "
+            exec { "$id$mode$path" :
+                    command   => "/usr/local/bin/chuckacl -u $id -p $mode $path",
+                    unless => "/usr/local/bin/chuckacl -c -u $id -p $mode $path",           
+                    logoutput => true,
             }
     }
 
